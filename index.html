@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking de Reciclaje</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f1;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .leaderboard-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 { 
+            color: #1b5e20; 
+            margin-top: 0;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf2ed;
+            font-size: 15px;
+        }
+        tr:hover {
+            background-color: #f9fbf9;
+        }
+        .posicion {
+            font-weight: bold;
+            width: 40px;
+            text-align: center;
+        }
+        .top-1 { color: #ffd700; font-size: 18px; } /* Oro */
+        .top-2 { color: #c0c0c0; font-size: 17px; } /* Plata */
+        .top-3 { color: #cd7f32; font-size: 16px; } /* Bronce */
+        
+        .uid-anonimo {
+            font-family: monospace;
+            color: #555;
+        }
+        .puntos-col {
+            font-weight: bold;
+            color: #2e7d32;
+            text-align: right;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+        .btn-refresh {
+            display: block;
+            margin: 20px auto 0 auto;
+            padding: 8px 16px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .btn-refresh:hover { background-color: #1b5e20; }
+    </style>
+</head>
+<body>
+
+<div class="leaderboard-container">
+    <h2>Ecolíderes de Reciclaje</h2>
+    <div class="subtitle">Tabla de posiciones en tiempo real (Top 10)</div>
+    
+    <div id="loadingElement" class="loading">Cargando puntuaciones desde la nube...</div>
+    
+    <table id="leaderboardTable" style="display: none;">
+        <thead>
+            <tr>
+                <th style="text-align: center;">Pos</th>
+                <th>ID Usuario (UID)</th>
+                <th style="text-align: right;">Puntos</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+            </tbody>
+    </table>
+
+    <button class="btn-refresh" onclick="cargarRanking()">Actualizar Tabla</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // REEMPLAZA ESTE BLOQUE CON TU CONFIGURACIÓN WEB DE FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyDB-Z1CJhWBClepeuw67rj5gPIjeMltawE",
+  authDomain: "separadordatabase.firebaseapp.com",
+  projectId: "separadordatabase",
+  storageBucket: "separadordatabase.firebasestorage.app",
+  messagingSenderId: "94194560299",
+  appId: "1:94194560299:web:0ee44e356a059fcb81696e",
+  measurementId: "G-Z4DNTFWTVL"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.cargarRanking = async function() {
+        const loadingEl = document.getElementById('loadingElement');
+        const tableEl = document.getElementById('leaderboardTable');
+        const tbody = document.getElementById('leaderboardBody');
+        
+        loadingEl.style.display = "block";
+        tableEl.style.display = "none";
+        tbody.innerHTML = "";
+
+        try {
+            // Consulta estructurada: Colección 'usuarios', ordenada por 'puntos' de manera descendente, limitada a 10 documentos
+            const usuariosRef = collection(db, "usuarios");
+            const q = query(usuariosRef, orderBy("puntos", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+
+            let indice = 1;
+            querySnapshot.forEach((doc) => {
+                const datos = doc.data();
+                const uidCompleto = doc.id;
+                
+                // Formatear el UID para que sea legible pero proteja la privacidad (ej: 4839****)
+                const uidOculto = uidCompleto.length > 6 
+                    ? uidCompleto.substring(0, 4) + "****" 
+                    : uidCompleto;
+
+                const puntos = datos.puntos || 0;
+
+                // Manejo visual de medallas para el Top 3
+                let posDisplay = indice;
+                if (indice === 1) posDisplay = '<span class="top-1">🥇</span>';
+                else if (indice === 2) posDisplay = '<span class="top-2">🥈</span>';
+                else if (indice === 3) posDisplay = '<span class="top-3">🥉</span>';
+
+                const fila = `
+                    <tr>
+                        <td class="posicion">${posDisplay}</td>
+                        <td class="uid-anonimo">${uidOculto}</td>
+                        <td class="puntos-col">${puntos} pts</td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+                indice++;
+            });
+
+            loadingEl.style.display = "none";
+            tableEl.style.display = "table";
+        } catch (error) {
+            console.error("Error al obtener ranking:", error);
+            loadingEl.innerHTML = "<span style='color: red;'>Error al conectar con el servidor de puntuaciones.</span>";
+        }
+    }
+
+    // Ejecutar la función automáticamente al cargar la página por primera vez
+    document.addEventListener("DOMContentLoaded", () => {
+        cargarRanking();
+    });
+</script>
+
+</body>
+</html>
