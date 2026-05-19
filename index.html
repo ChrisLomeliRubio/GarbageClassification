@@ -161,7 +161,7 @@ const firebaseConfig = {
                 
                 // Formatear el UID para que sea legible pero proteja la privacidad (ej: 4839****)
                 const uidOculto = uidCompleto.length > 6 
-                    ? uidCompleto.substring(0, 4) + "****" 
+                    ? uidCompleto.substring(0, 10)
                     : uidCompleto;
 
                 const puntos = datos.puntos || 0;
