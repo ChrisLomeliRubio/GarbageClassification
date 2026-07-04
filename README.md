@@ -29,7 +29,7 @@ A continuación se describen los comandos esenciales ejecutados en la consola de
 
 | Comando | Función |
 | :--- | :--- |
-| `lsmod | grep spi` | Confirma que el módulo del kernel para la comunicación SPI esté cargado correctamente (esencial para el lector RFID). |
+| `lsmod / grep spi` | Confirma que el módulo del kernel para la comunicación SPI esté cargado correctamente (esencial para el lector RFID). |
 | `ls /dev/video*` | Lista los dispositivos de video conectados para asegurar que la cámara sea reconocida por el sistema (típicamente `/dev/video0`). |
 | `pinout` | Proporciona una representación gráfica de la distribución física de los pines GPIO en la placa. |
 | `gpio readall` | Muestra el estado detallado, modo de operación (entrada/salida) y niveles de voltaje de cada pin GPIO. |
